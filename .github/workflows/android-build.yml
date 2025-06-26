@@ -1,0 +1,46 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_SDK_ROOT: ${{ runner.tool_cache }}/android-sdk
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: temurin
+        java-version: '17'
+
+    - name: Install Buildozer & dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y openjdk-17-jdk python3-pip libffi-dev libssl-dev
+        pip3 install --upgrade buildozer cython
+
+    - name: Install Android SDK & NDK
+      run: |
+        yes | sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "ndk;25.2.9519653"
+
+    - name: Build debug APK
+      run: |
+        buildozer android clean
+        buildozer android debug
+      env:
+        ANDROID_HOME: $ANDROID_SDK_ROOT
+        ANDROID_NDK_HOME: $ANDROID_SDK_ROOT/ndk/25.2.9519653
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: faceapp-debug.apk
+        path: bin/*.apk
