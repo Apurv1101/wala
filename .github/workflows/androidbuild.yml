@@ -1,0 +1,31 @@
+name: Android Build (Buildozer Docker)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1️⃣ Fetch your repository code
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # 2️⃣ Build the APK inside the pre-configured Buildozer container
+    - name: Build APK with Buildozer (Docker)
+      run: |
+        docker run --rm \
+          -v "${{ github.workspace }}":/workspace \
+          -w /workspace \
+          kivy/buildozer:stable \
+          buildozer android debug
+
+    # 3️⃣ Upload the generated APK as a CI artifact
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: faceapp-debug
+        path: bin/*.apk
