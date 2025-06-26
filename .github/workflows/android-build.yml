@@ -1,29 +1,39 @@
 name: Android APK Build
 
+# ──────────────────────────────────────────────────────────────
+# Triggers
+# ──────────────────────────────────────────────────────────────
 on:
   push:
-    branches: [ main ]
-  pull_request:
+    branches: [main]      # run on every push to main
+  pull_request:           # and on each PR
 
+# ──────────────────────────────────────────────────────────────
 jobs:
-  build:
-    name: Build APK using Buildozer
+  build-apk:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
-      - name: Set up Docker Buildozer and build APK
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/home/user/app \
-            -w /home/user/app \
-            kivy/buildozer \
-            buildozer android debug
+    # 1. Check out repository code
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: built-apk
-          path: bin/*.apk
+    # 2. Pull the Buildozer Docker image (optional but clearer logs)
+    - name: Pull Buildozer image
+      run: docker pull kivy/buildozer:stable
+
+    # 3. Build APK inside the container
+    - name: Build APK with Buildozer
+      run: |
+        docker run --rm \
+          -v "${{ github.workspace }}":/home/user/app \
+          -w /home/user/app \
+          kivy/buildozer:stable \
+          buildozer android debug
+
+    # 4. Upload the generated APK
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: FaceApp-debug-apk
+        path: bin/*.apk
